@@ -7,3 +7,6 @@ torch
 transformers
 numpy
 pandas
+groq
+python-dotenv
+scikit-learn
