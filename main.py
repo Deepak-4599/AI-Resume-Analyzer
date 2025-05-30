@@ -9,174 +9,330 @@ import re                                         # To perform Regular Expressio
 from dotenv import load_dotenv                    # Loading API Key from .env file
 import os
 
-# Custom CSS for better fonts and styling with animated title
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+# Initialize theme in session state
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = True  # Default to dark mode
+
+def apply_theme():
+    """Apply dark or light theme based on session state"""
     
-    /* Animated title styling */
-        .animated-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 3rem;
-            font-weight: 700;
-            color: white;
-            animation: bounce 2s ease-in-out infinite;
-            margin-bottom: 0;
-            text-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
+    if st.session_state.dark_mode:
+        # Dark theme CSS
+        theme_css = """
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+            
+            .stApp {
+                background: linear-gradient(135deg, #0E1117 0%, #1a1c29 100%);
+                color: #FAFAFA;
+                font-family: 'Poppins', sans-serif;
+            }
+            
+            /* Animated title styling */
+            .animated-title {
+                font-family: 'Poppins', sans-serif;
+                font-size: 3rem;
+                font-weight: 700;
+                color: white;
+                animation: bounce 2s ease-in-out infinite;
+                margin-bottom: 0;
+                text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            }
+            
+            /* Theme toggle button */
+            .theme-toggle {
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                z-index: 999;
+                background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            }
+            
+            .theme-toggle:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+            }
+            
+            /* Gradient animation */
+            @keyframes gradientShift {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+            
+            /* Bounce animation */
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+            }
+            
+            /* Typewriter effect for subtitle */
+            .typewriter {
+                font-family: 'Poppins', sans-serif;
+                font-size: 1.2rem;
+                font-weight: 400;
+                color: #B0BEC5;
+                margin-top: 0;
+                overflow: hidden;
+                border-right: 2px solid #1E88E5;
+                white-space: nowrap;
+                animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+            }
+            
+            @keyframes typing {
+                from { width: 0; }
+                to { width: 100%; }
+            }
+            
+            @keyframes blink-caret {
+                from, to { border-color: transparent; }
+                50% { border-color: #1E88E5; }
+            }
+            
+            /* Form labels */
+            .stTextArea label, .stFileUploader label {
+                font-family: 'Poppins', sans-serif;
+                font-weight: 600;
+                color: #FAFAFA !important;
+            }
+            
+            /* Button styling */
+            .stButton > button {
+                font-family: 'Poppins', sans-serif;
+                font-weight: 600;
+                background: linear-gradient(45deg, #1E88E5, #42A5F5);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5rem 2rem;
+                font-size: 1.1rem;
+                transition: all 0.3s ease;
+            }
+            
+            .stButton > button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(30, 136, 229, 0.4);
+            }
+            
+            /* Metric styling */
+            .metric-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 1.5rem;
+                border-radius: 15px;
+                color: white;
+                text-align: center;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                transition: transform 0.3s ease;
+            }
+            
+            .metric-card:hover {
+                transform: translateY(-5px);
+            }
+            
+            /* Report styling */
+            .report-container {
+                background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
+                padding: 2rem;
+                border-radius: 15px;
+                color: white;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                margin: 1rem 0;
+            }
+            
+            /* Section headers */
+            .section-header {
+                font-family: 'Poppins', sans-serif;
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: #64B5F6;
+                margin: 2rem 0 1rem 0;
+                border-bottom: 3px solid #64B5F6;
+                padding-bottom: 0.5rem;
+                animation: slideIn 1s ease-out;
+            }
+            
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(-50px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        </style>
+        """
+    else:
+        # Light theme CSS
+        theme_css = """
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+            
+            .stApp {
+                background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+                color: #2C3E50;
+                font-family: 'Poppins', sans-serif;
+            }
+            
+            /* Animated title styling */
+            .animated-title {
+                font-family: 'Poppins', sans-serif;
+                font-size: 3rem;
+                font-weight: 700;
+                color: #2C3E50;
+                animation: bounce 2s ease-in-out infinite;
+                margin-bottom: 0;
+                text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+            
+            /* Theme toggle button */
+            .theme-toggle {
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                z-index: 999;
+                background: linear-gradient(45deg, #007BFF, #0056B3);
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            }
+            
+            .theme-toggle:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
+            }
+            
+            /* Bounce animation */
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+            }
+            
+            /* Typewriter effect for subtitle */
+            .typewriter {
+                font-family: 'Poppins', sans-serif;
+                font-size: 1.2rem;
+                font-weight: 400;
+                color: #6C757D;
+                margin-top: 0;
+                overflow: hidden;
+                border-right: 2px solid #007BFF;
+                white-space: nowrap;
+                animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+            }
+            
+            @keyframes typing {
+                from { width: 0; }
+                to { width: 100%; }
+            }
+            
+            @keyframes blink-caret {
+                from, to { border-color: transparent; }
+                50% { border-color: #007BFF; }
+            }
+            
+            /* Form labels */
+            .stTextArea label, .stFileUploader label {
+                font-family: 'Poppins', sans-serif;
+                font-weight: 600;
+                color: #2C3E50 !important;
+            }
+            
+            /* Button styling */
+            .stButton > button {
+                font-family: 'Poppins', sans-serif;
+                font-weight: 600;
+                background: linear-gradient(45deg, #007BFF, #0056B3);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5rem 2rem;
+                font-size: 1.1rem;
+                transition: all 0.3s ease;
+            }
+            
+            .stButton > button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+            }
+            
+            /* Metric styling */
+            .metric-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 1.5rem;
+                border-radius: 15px;
+                color: white;
+                text-align: center;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                transition: transform 0.3s ease;
+            }
+            
+            .metric-card:hover {
+                transform: translateY(-5px);
+            }
+            
+            /* Report styling */
+            .report-container {
+                background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+                padding: 2rem;
+                border-radius: 15px;
+                color: #2C3E50;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                margin: 1rem 0;
+                border: 1px solid #DEE2E6;
+            }
+            
+            /* Section headers */
+            .section-header {
+                font-family: 'Poppins', sans-serif;
+                font-size: 1.8rem;
+                font-weight: 600;
+                color: #007BFF;
+                margin: 2rem 0 1rem 0;
+                border-bottom: 3px solid #007BFF;
+                padding-bottom: 0.5rem;
+                animation: slideIn 1s ease-out;
+            }
+            
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(-50px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        </style>
+        """
     
-    /* Gradient animation */
-    @keyframes gradientShift {
-        0% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0% 50%;
-        }
-    }
+    st.markdown(theme_css, unsafe_allow_html=True)
+
+def theme_toggle():
+    """Create theme toggle button"""
+    # Create columns to position the toggle button
+    col1, col2, col3 = st.columns([7, 1, 1])
     
-    /* Bounce animation */
-    @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
-        }
-        40% {
-            transform: translateY(-10px);
-        }
-        60% {
-            transform: translateY(-5px);
-        }
-    }
-    
-    /* Typewriter effect for subtitle */
-    .typewriter {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.2rem;
-        font-weight: 400;
-        color: #666;
-        margin-top: 0;
-        overflow: hidden;
-        border-right: 2px solid #1E88E5;
-        white-space: nowrap;
-        animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
-    }
-    
-    /* Typing animation */
-    @keyframes typing {
-        from {
-            width: 0;
-        }
-        to {
-            width: 100%;
-        }
-    }
-    
-    /* Blinking cursor */
-    @keyframes blink-caret {
-        from, to {
-            border-color: transparent;
-        }
-        50% {
-            border-color: #1E88E5;
-        }
-    }
-    
-    /* Glow effect on hover */
-    .animated-title:hover {
-        animation: gradientShift 1s ease infinite, glow 1.5s ease-in-out infinite alternate;
-    }
-    
-    @keyframes glow {
-        from {
-            text-shadow: 0 0 10px #1E88E5, 0 0 20px #1E88E5, 0 0 30px #1E88E5;
-        }
-        to {
-            text-shadow: 0 0 20px #42A5F5, 0 0 30px #42A5F5, 0 0 40px #42A5F5;
-        }
-    }
-    
-    /* Override default Streamlit font */
-    .stApp {
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    /* Form labels */
-    .stTextArea label, .stFileUploader label {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        color: #333;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        background: linear-gradient(45deg, #1E88E5, #42A5F5);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 0.5rem 2rem;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(30, 136, 229, 0.4);
-    }
-    
-    /* Metric styling */
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-    }
-    
-    /* Report styling */
-    .report-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        color: white;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        margin: 1rem 0;
-    }
-    
-    /* Section headers */
-    .section-header {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #1E88E5;
-        margin: 2rem 0 1rem 0;
-        border-bottom: 3px solid #1E88E5;
-        padding-bottom: 0.5rem;
-        animation: slideIn 1s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
+    with col3:
+        if st.session_state.dark_mode:
+            if st.button("🌙", help="Switch to light mode", key="theme_toggle"):
+                st.session_state.dark_mode = False
+                st.rerun()
+        else:
+            if st.button("☀️", help="Switch to dark mode", key="theme_toggle"):
+                st.session_state.dark_mode = True
+                st.rerun()
+
+# Apply theme first
+apply_theme()
+
+# Add theme toggle
+theme_toggle()
 
 # Load environment variables from .env
 load_dotenv()
@@ -190,7 +346,7 @@ def load_lottieurl(url):
         return None
     return r.json()
 
- # Data analysis animation charts
+# Data analysis animation charts
 lottie_coding = load_lottieurl("https://assets1.lottiefiles.com/packages/lf20_qp1q7mct.json") 
 
 # Create columns for title and animation layout
@@ -206,7 +362,7 @@ with title_col2:
     if lottie_coding:
         st_lottie(lottie_coding, height=150, key="coding")
 
-#  Session States to store values 
+# Session States to store values 
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
 
